@@ -1,0 +1,15 @@
+open-clip-torch
+pytorch-lightning
+numpy
+transformers
+rasterio
+tifffile
+einops
+scikit-learn
+h5py
+pandas
+fiona
+pyproj
+shapely
+rtree
+tabulate
