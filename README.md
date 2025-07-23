@@ -44,13 +44,12 @@ cd MS-CLIP
 ```
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
 pip install -e .
 ```
 
 ## Inference
 
-To run classification and retrieval on custom images, classes and text queries use the `inference.py` file, for example:
+To run classification and retrieval on custom images, classes and text queries use the `inference.py` file. The script automatically downloads the weights from Hugging Face. You just need to provide a path to a folder with Sentinel-2 L2A files (all 12 bands) and `class_names` or a `query`.
 
 ```shell
 python inference.py --run-classification \
