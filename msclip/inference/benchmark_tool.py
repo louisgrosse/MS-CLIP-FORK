@@ -18,17 +18,17 @@ import logging
 import open_clip
 import torch
 import os
-from src.inference.classname_and_prompt import *
-from src.inference.datasets import RESISC45, EuroSATRGB, AID, EuroSATMS, METERML, METERML_NAIP
-from src.inference.clip_benchmark.metrics.zeroshot_eval import evaluate
-from src.inference.utils import get_preprocess
+from msclip.inference.classname_and_prompt import *
+from msclip.inference.datasets import RESISC45, EuroSATRGB, AID, EuroSATMS, METERML, METERML_NAIP
+from msclip.inference.clip_benchmark.metrics.zeroshot_eval import evaluate
+from msclip.inference.utils import get_preprocess
 import copy
 import numpy as np
 import os
 from torchvision import transforms
 import torch
-from src.inference.datasets.forestnet import init_forestnet
-from src.inference.datasets.bigearthnet import init_bigearthnet
+from msclip.inference.datasets.forestnet import init_forestnet
+from msclip.inference.datasets.bigearthnet import init_bigearthnet
 
 
 def zeroshot_get_dataset(dataset_name, root, other_features, templates, transform=None, all_bands=False):

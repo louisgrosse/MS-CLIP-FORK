@@ -11,12 +11,12 @@ def parse_requirements(filename):
 requirements = parse_requirements("requirements.txt")
 
 setup(
-    name="src",
+    name="msclip",
     version="0.1.0",
     description="Llama3-MS-CLIP",
     author="Clive Tinashe Marimo",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_packages(where="msclip"),
+    package_dir={"": "msclip"},
     python_requires=">=3.9",
     install_requires=requirements,  # Add requirements from requirements.txt
 )

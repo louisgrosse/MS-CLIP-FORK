@@ -15,7 +15,7 @@
 from torch import optim
 from pytorch_lightning import LightningModule
 import torch.nn.functional as F
-from src.model.factory import *
+from msclip.model.factory import *
 from transformers.modeling_outputs import BaseModelOutputWithPooling
 import re
 

@@ -23,8 +23,8 @@ import numpy as np
 from PIL import Image
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
-from src.model.model_arch import CLIPDualEncoderModel
-from src.inference.classname_and_prompt import *
+from msclip.model.model_arch import CLIPDualEncoderModel
+from msclip.inference.classname_and_prompt import *
 
 
 open_clip_weights = {

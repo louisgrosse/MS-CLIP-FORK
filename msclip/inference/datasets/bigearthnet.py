@@ -17,10 +17,10 @@ import torch
 from rasterio.enums import Resampling
 from torch import Tensor
 from torchvision import transforms
-from src.inference.datasets.geo import NonGeoDataset
-from src.inference.datasets.utils import download_url, extract_archive, sort_sentinel2_bands
-from src.inference.utils import Unsqueeze, SelectChannels, AddMeanChannels
-from src.inference.utils import SelectChannels, Unsqueeze, DictTransforms, ConvertType, AddMeanChannels
+from msclip.inference.datasets.geo import NonGeoDataset
+from msclip.inference.datasets.utils import download_url, extract_archive, sort_sentinel2_bands
+from msclip.inference.utils import Unsqueeze, SelectChannels, AddMeanChannels
+from msclip.inference.utils import SelectChannels, Unsqueeze, DictTransforms, ConvertType, AddMeanChannels
 
 
 class BigEarthNet(NonGeoDataset):

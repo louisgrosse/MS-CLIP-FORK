@@ -17,7 +17,7 @@ import tifffile
 from PIL import Image
 import torchvision.transforms as T
 from torchvision.datasets import ImageFolder
-from src.inference.datasets.transforms import ToTensor
+from msclip.inference.datasets.transforms import ToTensor
 
 
 class METERML(ImageFolder):
