@@ -47,6 +47,11 @@ source venv/bin/activate
 pip install -e .
 ```
 
+Alternatively, you can install this repo to another venv with
+```shell
+pip install git+https://github.com/IBM/MS-CLIP.git
+```
+
 ## Inference
 
 To run classification and retrieval on custom images, classes and text queries use the `inference.py` file. The script automatically downloads the weights from Hugging Face. You just need to provide a path to a folder with Sentinel-2 L2A files (all 12 bands) and `class_names` or a `query`.
@@ -91,6 +96,21 @@ Agricultural fields in a rural area 1      637U_59R_1_3.tif    0.243049
 ```
 
 If you like to save the results in a csv, you can provide file path, with `--save-path results/your_retrieval_results.csv`.
+
+If you install `msclip` as a package, you can use the inference functions in python.
+```python
+from msclip.inference import run_inference_retrieval, run_inference_classification
+
+results = run_inference_classification(
+    image_path="path/to/folder",
+    class_names=["class1", "class2", "class3"]
+)
+
+results = run_inference_retrieval(
+    image_path="path/to/folder",
+    queries=["A satellite image of a rural area."]
+)
+```
 
 ## Evaluation
 
