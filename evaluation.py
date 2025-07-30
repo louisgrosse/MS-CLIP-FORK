@@ -19,8 +19,8 @@ import random
 import numpy as np
 import argparse
 from pathlib import Path
-from src.inference.benchmark_tool import zeroshot_evaluation
-from src.inference.utils import build_model
+from msclip.inference.benchmark_tool import zeroshot_evaluation
+from msclip.inference.utils import build_model
 import csv
 from datetime import datetime
 

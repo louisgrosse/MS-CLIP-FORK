@@ -22,9 +22,9 @@ import open_clip
 import pandas as pd
 from pathlib import Path
 from tabulate import tabulate
-from src.inference.utils import open_clip_weights, pretrained_weights
+from msclip.inference.utils import open_clip_weights, pretrained_weights
 
-from src.inference.utils import (
+from msclip.inference.utils import (
     build_model,
     preprocess_and_stack,
     load_classes,
@@ -32,7 +32,7 @@ from src.inference.utils import (
     load_image_paths,
     load_queries
 )
-from src.inference.clip_benchmark.metrics.zeroshot_eval import zero_shot_classifier
+from msclip.inference.clip_benchmark.metrics.zeroshot_eval import zero_shot_classifier
 
 logging.basicConfig(
     level=os.getenv('log_level', 'INFO'),
