@@ -42,8 +42,7 @@ def run_inference_classification(
         model_name: str = "Llama3-MS-CLIP-Base",
         pretrained: bool = True,
         ckpt_path: str = None,
-        images: list[np.ndarray] = None,
-        image_path: str = None,
+        image_path: str | list[str] = None,
         class_names: list[str] = None,
         classes_file: str = None,
         save_path: str = None,
@@ -65,7 +64,10 @@ def run_inference_classification(
 
     tokenizer = open_clip.get_tokenizer(base_model)
 
-    image_paths = load_image_paths(image_path)
+    if isinstance(image_path, list):
+        image_paths = image_path
+    else:
+        image_paths = load_image_paths(image_path)
 
     # Class and prompt templates
     templates = load_templates(templates)

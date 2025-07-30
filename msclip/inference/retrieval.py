@@ -40,8 +40,7 @@ def run_inference_retrieval(
         model_name: str = "Llama3-MS-CLIP-Base",
         pretrained: bool = True,
         ckpt_path: str = None,
-        images: list[np.ndarray] = None,
-        image_path: str = None,
+        image_path: str | list[str] = None,
         queries: list[str] = None,
         queries_file: str = None,
         top_k: int = 5,
@@ -63,7 +62,10 @@ def run_inference_retrieval(
 
     tokenizer = open_clip.get_tokenizer(base_model)
 
-    image_paths = load_image_paths(image_path)
+    if isinstance(image_path, list):
+        image_paths = image_path
+    else:
+        image_paths = load_image_paths(image_path)
 
     if not queries and not queries_file:
         raise ValueError("Please provide queries as list of strings or a queries_file")
