@@ -87,7 +87,7 @@ def run_inference_classification(
         image_features = torch.nn.functional.normalize(image_features, dim=-1)
 
         logits = 100. * image_features @ classifier  # [B, num_classes]
-        probs = logits.softmax(dim=-1).cpu().numpy()  # [B, num_classes]
+        probs = logits.softmax(dim=-1).to(torch.float32).cpu().numpy()  # [B, num_classes]
 
     for path, prob in zip(image_paths, probs):
         results.append((os.path.basename(path), prob))
