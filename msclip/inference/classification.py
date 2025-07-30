@@ -47,7 +47,6 @@ def run_inference_classification(
         classes_file: str = None,
         save_path: str = None,
         device: str = None,
-        amp: bool = True,
         templates: str = "msclip",
         verbose: bool = True,
 ):
@@ -76,15 +75,14 @@ def run_inference_classification(
         raise ValueError("Please provide class_names as list of strings or a classes_file")
     classnames = class_names or load_classes(classes_file)
 
-    classifier = zero_shot_classifier(model, tokenizer, classnames, templates, device=device, amp=amp)
+    classifier = zero_shot_classifier(model, tokenizer, classnames, templates, device=device)
 
     results = []
 
-    # TODO Check if paths are needed
     image_tensor = preprocess_and_stack(image_paths, preprocess)  # [B, C, H, W]
     image_tensor = image_tensor.to(device)
 
-    with torch.no_grad():
+    with torch.no_grad(), torch.autocast(device_type=device):
         image_features = model.inference_vision(image_tensor)  # [B, D]
         image_features = torch.nn.functional.normalize(image_features, dim=-1)
 

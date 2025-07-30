@@ -41,8 +41,7 @@ def parse_args():
     parser.add_argument("--queries-file", type=str, help="Path to text queries .yaml or .txt file")
     parser.add_argument("--top-k", type=int, default=5, help="Number of top images to retrieve per query")
 
-    parser.add_argument("--amp", default=True, help="Use automatic mixed precision")
-    parser.add_argument("--device", default=None, help="Specify device")
+    parser.add_argument("--device", default=None, help="Overwrite default device")
 
     return parser.parse_args()
 
@@ -60,7 +59,6 @@ def main():
             classes_file=args.classes_file,
             save_path=args.save_path,
             device=args.device,
-            amp=args.amp,
             templates=args.templates,
             verbose=True,
         )
@@ -79,7 +77,6 @@ def main():
             top_k=args.top_k,
             save_path=args.save_path,
             device=args.device,
-            amp=args.amp,
             verbose=True,
         )
 

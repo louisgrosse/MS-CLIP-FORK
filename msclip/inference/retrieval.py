@@ -13,12 +13,10 @@
 # limitations under the License.
 
 import os
-import numpy as np
 import torch
 import open_clip
 import pandas as pd
 from pathlib import Path
-from contextlib import suppress
 from msclip.inference.utils import open_clip_weights, pretrained_weights
 
 from msclip.inference.utils import (
@@ -46,7 +44,6 @@ def run_inference_retrieval(
         top_k: int = 5,
         save_path: str = None,
         device: str = None,
-        amp: bool = True,
         verbose: bool = True,
 ):
     device = device or default_device
@@ -80,8 +77,7 @@ def run_inference_retrieval(
     image_tensor = preprocess_and_stack(image_paths, preprocess)
     image_tensor = image_tensor.to(device)
 
-    autocast = torch.cuda.amp.autocast if amp else suppress
-    with torch.no_grad(), autocast():
+    with torch.no_grad(), torch.autocast(device_type=device):
         image_features = model.inference_vision(image_tensor)  # [B, D]
         image_features = torch.nn.functional.normalize(image_features, dim=-1)
 
