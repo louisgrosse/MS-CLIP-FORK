@@ -15,7 +15,7 @@ setup(
     version="0.1.0",
     description="Llama3-MS-CLIP",
     author="Clive Tinashe Marimo",
-    packages=find_packages(where="msclip"),
+    packages=find_packages(),
     package_dir={"": "msclip"},
     python_requires=">=3.9",
     install_requires=requirements,  # Add requirements from requirements.txt
