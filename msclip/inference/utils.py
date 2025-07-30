@@ -52,6 +52,24 @@ pretrained_cfg = {
     }
 }
 
+pretrained_data_stats = {
+    'ms': {
+        'means': [ 925.161, 1183.128, 1338.041, 1667.254, 2233.633, 2460.96, 2555.569, 2619.542, 2406.497, 1841.645],
+        'stds': [1205.586, 1223.713, 1399.638, 1403.298, 1378.513, 1434.924, 1491.141, 1454.089, 1473.248, 1365.08],
+        'size': [224]
+    },
+    'rgb': {
+        'means': [0.48145466, 0.4578275, 0.40821073],
+        'stds': [0.26862954, 0.26130258, 0.27577711],
+        'size': [224]
+    },
+    'ms_all': {
+        'means': [794.311, 925.161, 1183.128, 1338.041, 1667.254, 2233.633, 2460.96 , 2555.569, 2619.542, 2703.298, 2406.497, 1841.645],
+        'stds': [1164.883, 1205.586, 1223.713, 1399.638, 1403.298, 1378.513, 1434.924, 1491.141, 1454.089, 1660.395, 1473.248, 1365.08],
+        'size': [224]
+    }
+}
+
 
 def build_model(model_name, pretrained, ckpt_path, device, **kwargs):
     if model_name in pretrained_weights:
@@ -77,7 +95,7 @@ def build_model(model_name, pretrained, ckpt_path, device, **kwargs):
             model.load_state_dict(torch.load(pretrained, map_location=device), strict=True)
 
         preprocess_val = get_preprocess(
-            image_resolution=224, is_ms=cfg["channels"] > 3, all_bands=cfg["channels"] == 12,
+            is_ms=cfg["channels"] > 3, all_bands=cfg["channels"] == 12,
         )
 
     elif model_name in open_clip_weights:
@@ -215,15 +233,12 @@ def _convert_to_rgb(image):
     return image.convert('RGB')
 
 
-def get_preprocess(image_resolution=224, is_ms=False, aug=None, all_bands=False):
-    with open('configs/data_config.yaml', 'r') as file:
-        data_params = yaml.safe_load(file)
-
+def get_preprocess(is_ms=False, all_bands=False):
         if is_ms:
             if all_bands:
-                data_params = data_params["ms_all"]
+                data_params = pretrained_data_stats["ms_all"]
             else:
-                data_params = data_params["ms"]
+                data_params = pretrained_data_stats["ms"]
             preprocess_ms = transforms.Compose([
                 transforms.Lambda(lambda x: x.astype(np.float32)),
 
@@ -233,14 +248,13 @@ def get_preprocess(image_resolution=224, is_ms=False, aug=None, all_bands=False)
                     interpolation=transforms.InterpolationMode.BICUBIC,
                 ),
                 transforms.CenterCrop(data_params["size"]),
-                transforms.Normalize(mean=[value - 1000 for value in data_params["means"]], std=data_params["stds"]),
-                #put back 1000
+                transforms.Normalize(mean=[value for value in data_params["means"]], std=data_params["stds"]),
             ])
 
             return preprocess_ms
 
         else:
-            data_params = data_params["rgb"]
+            data_params = pretrained_data_stats["rgb"]
             normalize = transforms.Normalize(
                 mean=data_params["means"], std=data_params["stds"]
             )
