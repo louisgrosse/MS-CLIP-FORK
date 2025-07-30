@@ -128,15 +128,18 @@ def load_classes(class_file):
         raise ValueError("Unsupported class file format. Use .txt or .yaml")
 
 
-def load_image_paths(class_file):
-    if class_file.endswith(".txt"):
-        with open(class_file, "r") as f:
+def load_image_paths(path):
+    if path.endswith(".txt"):
+        with open(path, "r") as f:
             return [line.strip() for line in f if line.strip()]
-    elif class_file.endswith((".yaml", ".yml")):
-        with open(class_file, "r") as f:
+    elif path.endswith((".yaml", ".yml")):
+        with open(path, "r") as f:
             return yaml.safe_load(f)["images"]
-    elif os.path.isdir(class_file):
-        return class_file  # Just return the directory path string
+    elif os.path.isdir(path):
+        return [
+            os.path.join(path, f) for f in os.listdir(path)
+            if f.lower().endswith((".jpg", ".jpeg", ".png", ".tif", ".tiff", ".npy", ".npz"))
+        ]
     else:
         raise ValueError("Unsupported class file format. Use .txt or .yaml")
 
