@@ -1,5 +1,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2504.11171-b31b1b?logo=arxiv)](https://arxiv.org/abs/2503.15969)
 [![HuggingFace](https://img.shields.io/badge/Hugging_Face-IBM--ESA--Geospaital-FFD21E?logo=huggingface)](https://huggingface.co/ibm-esa-geospatial/Llama3-MS-CLIP-base)
+[![Images](https://img.shields.io/badge/Dataset-Images-CCCCCC?logo=github)](https://github.com/DLR-MF-DAS/SSL4EO-S12-v1.1)
+[![Dataset](https://img.shields.io/badge/Dataset-Captions-FFD21E?logo=huggingface)](https://huggingface.co/datasets/ibm-esa-geospatial/Llama3-SSL4EO-S12-v1.1-captions)
 
 # Llama3-MS-CLIP
 Multispectral Vision-Language Learning for Earth Observation
