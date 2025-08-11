@@ -71,7 +71,7 @@ pretrained_data_stats = {
 }
 
 
-def build_model(model_name, pretrained, ckpt_path, device, **kwargs):
+def build_model(model_name="Llama3-MS-CLIP-Base", pretrained=True, ckpt_path=None, device="cpu", **kwargs):
     if model_name in pretrained_weights:
         if ckpt_path:
             # Local model
@@ -97,6 +97,7 @@ def build_model(model_name, pretrained, ckpt_path, device, **kwargs):
         preprocess_val = get_preprocess(
             is_ms=cfg["channels"] > 3, all_bands=cfg["channels"] == 12,
         )
+        base_model = pretrained_weights[model_name]["architecture"]
 
     elif model_name in open_clip_weights:
         if ckpt_path:
@@ -113,15 +114,17 @@ def build_model(model_name, pretrained, ckpt_path, device, **kwargs):
             model_name,
             pretrained=pretrained
         )
+        base_model = model_name
 
     else:
         raise ValueError(f"model_name {model_name} not found in pretrained weights "
         f"(f{list(pretrained_weights.keys()) + list(open_clip_weights.keys())})")
 
     model.eval()
-    model = model.to(device)
 
-    return model, preprocess_val
+    tokenizer = open_clip.get_tokenizer(base_model)
+
+    return model, preprocess_val, tokenizer
 
 
 def load_queries(class_file):

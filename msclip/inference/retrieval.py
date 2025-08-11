@@ -14,16 +14,15 @@
 
 import os
 import torch
-import open_clip
 import pandas as pd
 from pathlib import Path
-from msclip.inference.utils import open_clip_weights, pretrained_weights
+from collections.abc import Callable
 
 from msclip.inference.utils import (
     build_model,
     preprocess_and_stack,
     load_image_paths,
-    load_queries
+    load_queries,
 )
 
 if torch.cuda.is_available():
@@ -35,6 +34,9 @@ else:
 
 
 def run_inference_retrieval(
+        model: torch.nn.Module = None,
+        preprocess: Callable = None,
+        tokenizer: Callable = None,
         model_name: str = "Llama3-MS-CLIP-Base",
         pretrained: bool = True,
         ckpt_path: str = None,
@@ -47,17 +49,11 @@ def run_inference_retrieval(
         verbose: bool = True,
 ):
     device = device or default_device
-    model, preprocess = build_model(model_name, pretrained, ckpt_path, device)
+    if model is None or preprocess is None or tokenizer is None:
+        # Load model from HF
+        model, preprocess, tokenizer = build_model(model_name, pretrained, ckpt_path)
 
-    # Get base model from the model architecture
-    if model_name in open_clip_weights:
-        base_model = model_name
-    elif model_name in pretrained_weights:
-        base_model = pretrained_weights[model_name]["architecture"]
-    else:
-        raise ValueError("Cannot find base model architecture from model name.")
-
-    tokenizer = open_clip.get_tokenizer(base_model)
+    model.to(device)
 
     if isinstance(image_path, list):
         image_paths = image_path

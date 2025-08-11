@@ -102,8 +102,15 @@ If you like to save the results in a csv, you can provide file path, with `--sav
 If you install `msclip` as a package, you can use the inference functions in python.
 ```python
 from msclip.inference import run_inference_retrieval, run_inference_classification
+from msclip.inference.utils import build_model
+
+# Init Llama3-MS-CLIP from Hugging Face  
+model, preprocess, tokenizer = build_model()
 
 results = run_inference_classification(
+    model=model,
+    preprocess=preprocess,
+    tokenizer=tokenizer,
     image_path="path/to/folder",
     class_names=["class1", "class2", "class3"]
 )
