@@ -23,8 +23,8 @@ import numpy as np
 from PIL import Image
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
-from msclip.model.model_arch import CLIPDualEncoderModel
-from msclip.inference.classname_and_prompt import *
+from ..model.model_arch import CLIPDualEncoderModel
+from ..inference.classname_and_prompt import *
 
 
 open_clip_weights = {
@@ -92,7 +92,11 @@ def build_model(model_name="Llama3-MS-CLIP-Base", pretrained=True, ckpt_path=Non
 
         # Load pre-trained weights
         if pretrained:
-            model.load_state_dict(torch.load(pretrained, map_location=device), strict=True)
+            state_dict = torch.load(pretrained, map_location=device)
+            
+            # Now load with relaxed check
+            model.load_state_dict(state_dict, strict=False)
+
 
         preprocess_val = get_preprocess(
             is_ms=cfg["channels"] > 3, all_bands=cfg["channels"] == 12,

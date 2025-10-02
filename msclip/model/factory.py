@@ -22,6 +22,8 @@ def load_model(base_model: str, clone_weights: bool = True, channels: int = 12, 
     clip_model, _, _ = open_clip.create_model_and_transforms(base_model, ckpt_path)
     state_dict = clip_model.state_dict()
     orig_model = clip_model
+
+        
     if clone_weights:
         clip_model.visual.conv1 = nn.Conv2d(
             in_channels=channels,

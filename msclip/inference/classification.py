@@ -18,15 +18,16 @@ import pandas as pd
 from pathlib import Path
 from tabulate import tabulate
 from collections.abc import Callable
+from typing import List
 
-from msclip.inference.utils import (
+from .utils import (
     build_model,
     preprocess_and_stack,
     load_classes,
     load_templates,
     load_image_paths,
 )
-from msclip.inference.clip_benchmark.metrics.zeroshot_eval import zero_shot_classifier
+from .clip_benchmark.metrics.zeroshot_eval import zero_shot_classifier
 
 if torch.cuda.is_available():
     default_device = "cuda"
@@ -43,8 +44,8 @@ def run_inference_classification(
         model_name: str = "Llama3-MS-CLIP-Base",
         pretrained: bool = True,
         ckpt_path: str = None,
-        image_path: str | list[str] = None,
-        class_names: list[str] = None,
+        image_path: List[str] = None,
+        class_names: List[str] = None,
         classes_file: str = None,
         save_path: str = None,
         device: str = None,

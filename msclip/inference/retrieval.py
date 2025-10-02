@@ -17,8 +17,9 @@ import torch
 import pandas as pd
 from pathlib import Path
 from collections.abc import Callable
+from typing import List
 
-from msclip.inference.utils import (
+from .utils import (
     build_model,
     preprocess_and_stack,
     load_image_paths,
@@ -40,8 +41,8 @@ def run_inference_retrieval(
         model_name: str = "Llama3-MS-CLIP-Base",
         pretrained: bool = True,
         ckpt_path: str = None,
-        image_path: str | list[str] = None,
-        queries: list[str] = None,
+        image_path: List[str] = None,
+        queries: List[str] = None,
         queries_file: str = None,
         top_k: int = 5,
         save_path: str = None,
