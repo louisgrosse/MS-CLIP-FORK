@@ -21,8 +21,6 @@ import re
 import math
 
 
-# Replace / extend existing ImageEncoder class with this version:
-
 class ImageEncoder(nn.Module):
     def __init__(self, image_encoder) -> None:
         super().__init__()
@@ -77,18 +75,11 @@ class ImageEncoder(nn.Module):
         if visual is None:
             visual = model
 
-        # Try to extract patch embeddings from known visual backbone structures
         try:
-            # Timm-style ViT: patch_embed, pos_embed, transformer (or blocks)
             if hasattr(visual, "patch_embed"):
-                # Patchify
-                # Many ViT implementations use conv patch embed; others use patch_embed(x)
+
                 if hasattr(visual, "conv1") and hasattr(visual, "class_embedding"):
-                    # Eg. CLIP-like with conv1 + transformer
-                    # emulate typical CLIP forward to obtain tokens (including cls)
-                    # This is careful and checks existence of attributes used by various forks
-                    # Note: attribute names may differ -- if you hit an attribute error, paste the error
-                    # and I'll adapt to your fork.
+
                     conv1 = getattr(visual, "conv1")
                     class_emb = getattr(visual, "class_embedding")
                     pos_embed = getattr(visual, "positional_embedding", None)
@@ -96,79 +87,65 @@ class ImageEncoder(nn.Module):
                     transformer = getattr(visual, "transformer", None)
                     ln_post = getattr(visual, "ln_post", getattr(visual, "ln_final", None))
 
-                    # run conv patch embedding if present
                     try:
                         x_patch = conv1(x)  # (B, C', H', W')
                         B, C_, H_p, W_p = x_patch.shape
                         x_patch = x_patch.reshape(B, C_, -1).permute(0, 2, 1)  # (B, N, C')
                     except Exception:
-                        # fallback: try patch_embed(...) call
-                        x_patch = visual.patch_embed(x)  # many implementations
+
+                        x_patch = visual.patch_embed(x) 
                         if x_patch.ndim == 4:
                             B, C_, H_p, W_p = x_patch.shape
                             x_patch = x_patch.reshape(B, C_, -1).permute(0, 2, 1)
 
-                    # optionally add class token and pos embedding
                     if pos_embed is not None:
-                        # pos_embed shape often (1, N+1, D)
                         if pos_embed.ndim == 3 and pos_embed.shape[1] == x_patch.shape[1] + 1:
                             cls_tok = class_emb.to(x_patch.dtype).unsqueeze(0).expand(B, -1, -1)
                             x_tokens = torch.cat([cls_tok, x_patch], dim=1)
                             x_tokens = x_tokens + pos_embed.to(x_tokens.dtype)
                         else:
-                            # pos embed maybe already size N, just add
                             x_tokens = x_patch + pos_embed.to(x_patch.dtype)
                     else:
                         x_tokens = x_patch
 
-                    # normalization prior to transformer if present
                     if ln_pre is not None:
                         x_tokens = ln_pre(x_tokens)
 
-                    # run through transformer: accept either transformer(x) or transformer(x.permute...)
-                    # try calling transformer directly
+  
                     try:
-                        # Some transformers expect sequence-first: (L,B,D) others (B,L,D). Try both.
-                        # First try (B,L,D) -> transformer expects batch_first True in many recent impls
                         out = transformer(x_tokens)
                     except Exception:
-                        # try permuting
                         out = transformer(x_tokens.permute(1, 0, 2)).permute(1, 0, 2)
 
-                    # apply final norm if exists
                     if ln_post is not None:
                         out = ln_post(out)
 
-                    # Drop CLS token if present (most backbones have it)
                     if out.shape[1] == x_patch.shape[1] + 1:
                         out = out[:, 1:, :]
 
                     return out  # (B, num_patches, embed_dim)
 
                 else:
-                    # Timm-style backbone: call forward_features if available
+                   
                     if hasattr(visual, "forward_features"):
-                        out = visual.forward_features(x)  # many return (B, N+1, D)
-                        # if it's a tuple like (features, extra) handle accordingly
+                        out = visual.forward_features(x)  # (B, N+1, D)
+                        
                         if isinstance(out, tuple):
                             out = out[0]
-                        # drop cls token if present
                         if out.shape[1] > 1:
-                            # heuristic: if shape[1] is (H_patch * W_patch) + 1
                             out = out[:, 1:, :]
                         return out
-            # fallback: try the generic encode_image and see if it returns token outputs (some forks do)
             out = self.model.encode_image(x)
-            # if encode_image returns BaseModelOutputWithPooling, we cannot get patches from it
+
             if isinstance(out, BaseModelOutputWithPooling):
-                # Not multi-scale by default — we will raise to indicate user must adapt
+
                 raise RuntimeError(
                     "encode_image returned pooled features only. Use a backbone that exposes per-patch tokens "
                     "or adapt the model to return intermediate tokens."
                 )
-            # if out is a tuple or dict possibly contains tokens
+           
             if isinstance(out, (tuple, list)):
-                # try to find an array-like with shape (B, N, D)
+               
                 for item in out:
                     if isinstance(item, torch.Tensor) and item.ndim == 3:
                         return item
@@ -189,7 +166,6 @@ class ImageEncoder(nn.Module):
                 x = x.reshape(x.shape[0], x.shape[1], -1) 
                 x = x.permute(0, 2, 1)           
 
-                # Prepend class token if the model uses one
                 if hasattr(visual, "class_embedding"):
                     cls_token = visual.class_embedding.to(x.dtype)
                     cls_token = cls_token.unsqueeze(0).expand(x.size(0), -1, -1) 
