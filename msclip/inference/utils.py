@@ -80,11 +80,12 @@ def build_model(model_name="Llama3-MS-CLIP-Base", pretrained=True, ckpt_path=Non
             # Load Llama3-MS-CLIP from Hugging Face
             pretrained = hf_hub_download(repo_id=pretrained_weights[model_name]['hf_hub_id'],
                                          filename=pretrained_weights[model_name]['hf_hub_filename'])
-        logging.info(f"Initializing {model_name} model (checkpoint: {os.path.basename(pretrained)})")
+        #logging.info(f"Initializing {model_name} model (checkpoint: {os.path.basename(pretrained)})")
 
         cfg = pretrained_cfg[model_name]
-        if pretrained:
-            cfg["ckpt"] = None  # Avoid loading weights twice
+
+        cfg["ckpt"] = None  # Avoid loading weights twice
+        
         cfg.update(kwargs)  # Update config based on kw args
 
         # Init CLIP model

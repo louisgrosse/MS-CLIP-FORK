@@ -15,26 +15,25 @@
 from torch import optim
 from pytorch_lightning import LightningModule
 import torch.nn.functional as F
-from .factory import *
+from msclip.model.factory import *
 from transformers.modeling_outputs import BaseModelOutputWithPooling
 import re
-import math
 
 
 class ImageEncoder(nn.Module):
-    def __init__(self, image_encoder) -> None:
+    def __init__(
+            self, image_encoder) -> None:
         super().__init__()
+
         self.model = image_encoder
 
     def forward(self, images):
-        """
-        Legacy pooled inference path used by classification pipeline.
-        Returns L2-normalized pooled image embedding (same as before).
-        """
         if not isinstance(images, torch.Tensor):
+
             if len(images["pixel_values"].shape) == 5:
                 images["pixel_values"] = images["pixel_values"].squeeze(dim=1)
                 features = self.model.encode_image(images["pixel_values"])
+
         else:
             if len(images.shape) == 5:
                 images = images.squeeze(dim=1)
@@ -43,146 +42,6 @@ class ImageEncoder(nn.Module):
         if isinstance(features, BaseModelOutputWithPooling):
             features = features.pooler_output
         return features
-
-    def get_patch_embeddings(self, images, return_multi_scale=False):
-        """
-        New: Returns per-patch (dense) embeddings.
-        images: torch.Tensor of shape [B, C, H, W] OR nested dict like {'pixel_values': ...}
-        return_multi_scale: if MS-CLIP supports multiple scales, try to return dict of scales.
-        Returns:    
-            If return_multi_scale=False: tensor (B, num_patches, embed_dim)
-            If return_multi_scale=True: dict {scale_name: tensor(B, P_s, D_s), ...}
-        """
-        # normalize input shape to tensor
-        if not isinstance(images, torch.Tensor):
-            if isinstance(images, dict) and "pixel_values" in images:
-                x = images["pixel_values"]
-            else:
-                raise ValueError("Unsupported images input for get_patch_embeddings")
-        else:
-            x = images
-
-        if len(x.shape) == 5:  # sometimes B,1,C,H,W
-            x = x.squeeze(1)
-
-        model = getattr(self.model, "model", self.model)  
-        visual = None
-
-        for cand in ["visual", "vision", "vision_encoder", "visual_backbone"]:
-            if hasattr(model, cand):
-                visual = getattr(model, cand)
-                break
-        if visual is None:
-            visual = model
-
-        try:
-            if hasattr(visual, "patch_embed"):
-
-                if hasattr(visual, "conv1") and hasattr(visual, "class_embedding"):
-
-                    conv1 = getattr(visual, "conv1")
-                    class_emb = getattr(visual, "class_embedding")
-                    pos_embed = getattr(visual, "positional_embedding", None)
-                    ln_pre = getattr(visual, "ln_pre", None)
-                    transformer = getattr(visual, "transformer", None)
-                    ln_post = getattr(visual, "ln_post", getattr(visual, "ln_final", None))
-
-                    try:
-                        x_patch = conv1(x)  # (B, C', H', W')
-                        B, C_, H_p, W_p = x_patch.shape
-                        x_patch = x_patch.reshape(B, C_, -1).permute(0, 2, 1)  # (B, N, C')
-                    except Exception:
-
-                        x_patch = visual.patch_embed(x) 
-                        if x_patch.ndim == 4:
-                            B, C_, H_p, W_p = x_patch.shape
-                            x_patch = x_patch.reshape(B, C_, -1).permute(0, 2, 1)
-
-                    if pos_embed is not None:
-                        if pos_embed.ndim == 3 and pos_embed.shape[1] == x_patch.shape[1] + 1:
-                            cls_tok = class_emb.to(x_patch.dtype).unsqueeze(0).expand(B, -1, -1)
-                            x_tokens = torch.cat([cls_tok, x_patch], dim=1)
-                            x_tokens = x_tokens + pos_embed.to(x_tokens.dtype)
-                        else:
-                            x_tokens = x_patch + pos_embed.to(x_patch.dtype)
-                    else:
-                        x_tokens = x_patch
-
-                    if ln_pre is not None:
-                        x_tokens = ln_pre(x_tokens)
-
-  
-                    try:
-                        out = transformer(x_tokens)
-                    except Exception:
-                        out = transformer(x_tokens.permute(1, 0, 2)).permute(1, 0, 2)
-
-                    if ln_post is not None:
-                        out = ln_post(out)
-
-                    if out.shape[1] == x_patch.shape[1] + 1:
-                        out = out[:, 1:, :]
-
-                    return out  # (B, num_patches, embed_dim)
-
-                else:
-                   
-                    if hasattr(visual, "forward_features"):
-                        out = visual.forward_features(x)  # (B, N+1, D)
-                        
-                        if isinstance(out, tuple):
-                            out = out[0]
-                        if out.shape[1] > 1:
-                            out = out[:, 1:, :]
-                        return out
-            out = self.model.encode_image(x)
-
-            if isinstance(out, BaseModelOutputWithPooling):
-
-                raise RuntimeError(
-                    "encode_image returned pooled features only. Use a backbone that exposes per-patch tokens "
-                    "or adapt the model to return intermediate tokens."
-                )
-           
-            if isinstance(out, (tuple, list)):
-               
-                for item in out:
-                    if isinstance(item, torch.Tensor) and item.ndim == 3:
-                        return item
-            if isinstance(out, torch.Tensor) and out.ndim == 3:
-                return out
-
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to extract patch embeddings from MS-CLIP visual module. "
-                f"Error: {e}. Please paste the visual backbone class or the stack trace so I can adapt."
-            )
-        
-        try:
-            visual = self.model.visual
-
-            if visual.__class__.__name__ == "VisionTransformer":
-                x = visual.conv1(x)             
-                x = x.reshape(x.shape[0], x.shape[1], -1) 
-                x = x.permute(0, 2, 1)           
-
-                if hasattr(visual, "class_embedding"):
-                    cls_token = visual.class_embedding.to(x.dtype)
-                    cls_token = cls_token.unsqueeze(0).expand(x.size(0), -1, -1) 
-                    x = torch.cat([cls_token, x], dim=1)  
-
-                return x
-
-            elif hasattr(visual, "blocks"): 
-                raise NotImplementedError("timm-style VisionTransformer not yet supported")
-            else:
-                raise RuntimeError(f"Unsupported visual backbone: {visual.__class__.__name__}")
-
-        except Exception as e:
-            raise RuntimeError(f"Failed to extract patch embeddings from MS-CLIP visual module. Error: {e}")
-
-        raise RuntimeError("Unable to find a supported visual backbone structure for patch extraction.")
-
 
 
 class TextEncoder(nn.Module):
@@ -206,7 +65,7 @@ class TextEncoder(nn.Module):
 
 class BaseModel(nn.Module):
     def __init__(self,
-                 channels: int = 14,
+                 channels: int = 12,
                  base_model_str="ViT-B-16",
                  ckpt: str = "laion2b-s34b-b88K",
                  clone_weights: bool = True,
@@ -287,7 +146,6 @@ class CLIPDualEncoderModel(LightningModule):
         super().__init__(*args, **kwargs)
         self.clip_base_model = BaseModel(channels=channels, base_model_str=base_model_str, ckpt=ckpt,
                                          clone_weights=clone_weights)
-        
         self.channels = channels
         self.tokenizer = self.clip_base_model.tokenizer
         self.warm_up = warm_up

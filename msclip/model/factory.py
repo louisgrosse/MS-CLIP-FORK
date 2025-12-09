@@ -42,7 +42,7 @@ def load_model(base_model: str, clone_weights: bool = True, channels: int = 12, 
     return clip_model, tokenizer
 
 
-def extend_weights(state_dict: dict, channels: int):
+#def extend_weights(state_dict: dict, channels: int):
     old_patch_weights = state_dict["visual.conv1.weight"]
     new_patch_weights = torch.zeros(
         (old_patch_weights.shape[0], channels, old_patch_weights.shape[2], old_patch_weights.shape[3]))
@@ -51,4 +51,19 @@ def extend_weights(state_dict: dict, channels: int):
     new_patch_weights[:, 2:3, :, :] = old_patch_weights[:, 0:1, :, :]  # Keep original RGB weights
     state_dict["visual.conv1.weight"] = new_patch_weights
 
+    return state_dict
+
+# The initial function initialises randomly for rgb channels and 0 to other channels but we want everything to be random
+def extend_weights(state_dict: dict, channels: int):
+    old = state_dict["visual.conv1.weight"]          # (O, 3, kH, kW)
+    O, _, kH, kW = old.shape
+    new = old.new_empty(O, channels, kH, kW)         # allocate
+
+    new[:, 0:1] = old[:, 2:3]
+    new[:, 1:2] = old[:, 1:2]
+    new[:, 2:3] = old[:, 0:1]
+
+    torch.nn.init.kaiming_normal_(new[:, 3:], mode="fan_out", nonlinearity="relu")
+
+    state_dict["visual.conv1.weight"] = new
     return state_dict
